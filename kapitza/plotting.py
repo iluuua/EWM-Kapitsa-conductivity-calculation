@@ -29,7 +29,8 @@ def _style_axis(ax, ylabel, yscale="linear"):
         ax.yaxis.set_major_formatter(EngFormatter(unit=""))
     ax.grid(which="major", alpha=0.7)
     ax.grid(which="minor", alpha=0.25)
-    for s in ("top", "right"): ax.spines[s].set_visible(False)
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
 
 
 def _finite_xy(x, y):
@@ -38,13 +39,27 @@ def _finite_xy(x, y):
     return x[m], y[m]
 
 
-def plot_group_all_interfaces(T_arr, per_ifc_dict, sigma_list, colors_map, outdir):
-    """Сохраняет ровно ДВЕ картинки: group_h_all.png и group_R_all.png (по 4 графика каждая)."""
+def plot_group_two_stacks(
+        T_arr,
+        per_ifc_dict,
+        sigma_list,
+        colors_map,
+        outdir,
+        stack_names=("Al-SiO2-Si", "Al-Si3N4-Si"),
+        panel_interfaces=("Al SiO2", "Al Si3N4", "SiO2 Si")
+):
+    """
+    Creates and saves two graph pictures:
+      - Three of them are interfaces;
+      - Fourth panel shows two stacks.
+    """
     _setup_matplotlib()
-    interfaces = list(per_ifc_dict.keys())  # 3 пары + 'stack'
-    # ----- h_K -----
+
+    # ---------- h_K ----------
     fig, axes = plt.subplots(2, 2, figsize=(12.5, 8.5), constrained_layout=True)
-    for i, name in enumerate(interfaces):
+
+    # 3 interfaces
+    for i, name in enumerate(panel_interfaces):
         ax = axes[i // 2, i % 2]
         for s in sigma_list:
             nm = int(round(s * 1e9))
@@ -52,23 +67,38 @@ def plot_group_all_interfaces(T_arr, per_ifc_dict, sigma_list, colors_map, outdi
             clr = colors_map[nm]
             x, y = _finite_xy(T_arr, per_ifc_dict[name][key]["h"])
             ax.plot(x, y, marker="o", lw=2.0, ms=5.0, color=clr, label=f"{nm}")
-
         ax.set_title(name)
         ax.set_xlabel("T (K)")
         _style_axis(ax, "h_K (W·m$^{-2}$·K$^{-1}$)", "linear")
 
-    leg_labels = [f"{int(round(s*1e9))}" for s in sigma_list]
-    handles = [plt.Line2D([0],[0], color=colors_map[int(round(s * 1e9))], lw=2.5) for s in sigma_list]
+    # Two stacks
+    ax = axes[1, 1]
+    linestyles = {stack_names[0]: "-", stack_names[1]: "--"}
+    for s in sigma_list:
+        nm = int(round(s * 1e9))
+        key = f"{nm}nm"
+        clr = colors_map[nm]
+        for st in stack_names:
+            x, y = _finite_xy(T_arr, per_ifc_dict[st][key]["h"])
+            ax.plot(x, y, lw=2.2, color=clr, linestyle=linestyles[st])
+    ax.set_title(f"Stacks: {stack_names[0]} (—), {stack_names[1]} (– –)")
+    ax.set_xlabel("T (K)")
+    _style_axis(ax, "h_K (W·m$^{-2}$·K$^{-1}$)", "linear")
 
+    # Legend by σ
+    leg_labels = [f"{int(round(s * 1e9))}" for s in sigma_list]
+    handles = [plt.Line2D([0], [0], color=colors_map[int(round(s * 1e9))], lw=2.5) for s in sigma_list]
     fig.legend(handles, leg_labels, title="σ (nm)", loc="lower center",
                bbox_to_anchor=(0.5, -0.02), ncol=len(leg_labels), frameon=False)
     fig.suptitle("h_K(T)", y=1.02, fontsize=14)
     fig.savefig(str(Path(outdir) / "group_h_all.png"), bbox_inches="tight")
     plt.close(fig)
 
-    # ----- R -----
+    # ---------- R ----------
     fig, axes = plt.subplots(2, 2, figsize=(12.5, 8.5), constrained_layout=True)
-    for i, name in enumerate(interfaces):
+
+    # 3 interfaces
+    for i, name in enumerate(panel_interfaces):
         ax = axes[i // 2, i % 2]
         for s in sigma_list:
             nm = int(round(s * 1e9))
@@ -76,13 +106,25 @@ def plot_group_all_interfaces(T_arr, per_ifc_dict, sigma_list, colors_map, outdi
             clr = colors_map[nm]
             x, y = _finite_xy(T_arr, per_ifc_dict[name][key]["R"])
             ax.plot(x, y, marker="o", lw=2.0, ms=5.0, color=clr, label=f"{nm}")
-
         ax.set_title(name)
         ax.set_xlabel("T (K)")
         _style_axis(ax, "R (m$^2$·K·W$^{-1}$)", "log")
 
-    handles = [plt.Line2D([0],[0], color=colors_map[int(round(s * 1e9))], lw=2.5) for s in sigma_list]
+    # Two stacks
+    ax = axes[1, 1]
+    for s in sigma_list:
+        nm = int(round(s * 1e9))
+        key = f"{nm}nm"
+        clr = colors_map[nm]
+        for st in stack_names:
+            x, y = _finite_xy(T_arr, per_ifc_dict[st][key]["R"])
+            ax.plot(x, y, lw=2.2, color=clr, linestyle=linestyles[st])
+    ax.set_title(f"Stacks: {stack_names[0].replace('_', '/')[6:]} (—), {stack_names[1].replace('_', '/')[6:]} (– –)")
+    ax.set_xlabel("T (K)")
+    _style_axis(ax, "R (m$^2$·K·W$^{-1}$)", "log")
 
+    # Legend by σ
+    handles = [plt.Line2D([0], [0], color=colors_map[int(round(s * 1e9))], lw=2.5) for s in sigma_list]
     fig.legend(handles, leg_labels, title="σ (nm)", loc="lower center",
                bbox_to_anchor=(0.5, -0.02), ncol=len(leg_labels), frameon=False)
     fig.suptitle("R(T)", y=1.02, fontsize=14)

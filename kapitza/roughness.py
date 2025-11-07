@@ -9,47 +9,47 @@ def W_phi(phis, gamma):
 
 
 def theta_local(thetas, phis):
-    θ = thetas[:, None]
-    φ = phis[None, :]
-    S = θ + φ
-    left = (φ <= -θ)
-    mid = (~left) & (φ < (pi / 2 - θ))
+    theta = thetas[:, None]
+    phi = phis[None, :]
+    S = theta + phi
+    left = (phi <= -theta)
+    mid = (~left) & (phi < (pi / 2 - theta))
     right = ~(left | mid)
-    θ0 = np.empty_like(S, dtype=np.float64)
-    θ0[left] = -S[left]
-    θ0[mid] = S[mid]
-    θ0[right] = pi / 2
+    theta_0 = np.empty_like(S, dtype=np.float64)
+    theta_0[left] = -S[left]
+    theta_0[mid] = S[mid]
+    theta_0[right] = pi / 2
 
-    return np.clip(θ0, 0.0, pi / 2)
+    return np.clip(theta_0, 0.0, pi / 2)
 
 
 def angle_average_A(thetas, get_alpha, *, sigma=0.0, Lcorr=10e-9, nphi=121):
-    wθ = np.cos(thetas) * np.sin(thetas)
+    w_theta = np.cos(thetas) * np.sin(thetas)
     if sigma <= 0 or Lcorr <= 0:
         a = get_alpha(thetas)
         a = np.nan_to_num(a, nan=0.0, posinf=1.0, neginf=0.0)
 
-        return max(np.trapz(a * wθ, thetas), 0.0)
+        return max(np.trapz(a * w_theta, thetas), 0.0)
 
     gamma = sigma / Lcorr
     eps = 1e-6
     phis = np.linspace(-pi / 2 + eps, pi / 2 - eps, nphi)
     wphi = W_phi(phis, gamma)
 
-    θ0 = theta_local(thetas, phis)
-    shadow = θ0 >= (pi / 2 - 1e-8)
-    α = get_alpha(θ0.ravel()).reshape(θ0.shape)
-    α = np.where(shadow, 0.0, α)
-    α = np.nan_to_num(α, nan=0.0, posinf=1.0, neginf=0.0)
+    theta_0 = theta_local(thetas, phis)
+    shadow = theta_0 >= (pi / 2 - 1e-8)
+    alpha = get_alpha(theta_0.ravel()).reshape(theta_0.shape)
+    alpha = np.where(shadow, 0.0, alpha)
+    alpha = np.nan_to_num(alpha, nan=0.0, posinf=1.0, neginf=0.0)
 
-    num = np.trapz(α * wphi, phis, axis=1)
+    num = np.trapz(alpha * wphi, phis, axis=1)
     den = np.trapz(wphi, phis)
-    αeff = num / max(den, 1e-30)
-    A_val = np.trapz(αeff * wθ, thetas)
+    alpha_eff = num / max(den, 1e-30)
+    A_val = np.trapz(alpha_eff * w_theta, thetas)
 
     if not np.isfinite(A_val) or A_val <= 0.0:
         a_spec = np.nan_to_num(get_alpha(thetas), nan=0.0, posinf=1.0, neginf=0.0)
-        A_val = np.trapz(a_spec * wθ, thetas)
+        A_val = np.trapz(a_spec * w_theta, thetas)
         A_val = max(A_val, 0.0)
 
     return A_val

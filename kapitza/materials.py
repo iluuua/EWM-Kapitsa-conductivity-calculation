@@ -37,8 +37,23 @@ Si3N4 = Material(3100.0, 10000.0, 6000.0, wD_Si3N4, wD_Si3N4, name="Si3N4")
 
 
 def default_pairs():
+    """
+    Interface pairs and stacks
+    """
     return [
-        ("Al | Si3N4", Al, Si3N4),
-        ("Si3N4 | SiO2", Si3N4, SiO2),
-        ("SiO2 | Si", SiO2, Si),
+        ("Al Si3N4", Al, Si3N4),
+        ("Si3N4 SiO2", Si3N4, SiO2),
+        ("SiO2 Si", SiO2, Si),
+        ("Al SiO2", Al, SiO2),
+        ("Si3N4 Si", Si3N4, Si),
     ]
+
+
+def stack_variants():
+    """
+    Two stacks: name -> sum of stacks' elements
+    """
+    return {
+        "Al-SiO2-Si": ("Al SiO2", "SiO2 Si"),
+        "Al-Si3N4-Si": ("Al Si3N4", "Si3N4 Si"),
+    }
