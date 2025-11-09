@@ -119,7 +119,7 @@ def plot_group_two_stacks(
         for st in stack_names:
             x, y = _finite_xy(T_arr, per_ifc_dict[st][key]["R"])
             ax.plot(x, y, lw=2.2, color=clr, linestyle=linestyles[st])
-    ax.set_title(f"Stacks: {stack_names[0].replace('_', '/')[6:]} (—), {stack_names[1].replace('_', '/')[6:]} (– –)")
+    ax.set_title(f"Stacks: {stack_names[0]} (—), {stack_names[1]} (– –)")
     ax.set_xlabel("T (K)")
     _style_axis(ax, "R (m$^2$·K·W$^{-1}$)", "log")
 
